@@ -26,10 +26,16 @@ curl https://raw.githubusercontent.com/hhorak/photo-wall-convert/master/photo-wa
 
 ## Usage example
 
-Suppose you are in the folder with photos. Run the following command to convert the photos:
+Suppose you are in the folder with photos `D123.JPG` and `D124.JPG`. Run the following command to convert the photos:
 
 ```
 photo-wall-convert --event "DevConf.cz 2020" --author "Honza Horak" *.jpg *.JPG
+```
+
+This results in a new directory `./converted/` and the following two files annotated and converted to the expected size:
+```
+./converted/D123.JPG
+./converted/D124.JPG
 ```
 
 ## License
