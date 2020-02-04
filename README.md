@@ -8,6 +8,7 @@ Arguments:
   --event <event_title> is a short string
   --author <author> (optional) name of the person who took the photo that also holds the copyright; if omitted, it is taken from exif data
   --crop Crop the image to the expected ratio
+  --gravity <west|east> Whether the annotation should be on the left (west) or right (east), west is the default
   --open Open the output directory after conversion is done
   --quiet Do not write verbose output
 ```

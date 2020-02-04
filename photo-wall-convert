@@ -6,12 +6,13 @@ output_dir=converted
 crop=false
 open_dir=false
 quiet=false
+gravity=west
 counter_total=0
 counter_converted=0
 font='/usr/share/fonts/redhat/RedHatDisplay-Bold.ttf'
 
 usage() {
-  echo "Usage: $(basename "$0") --event <event_title> [--quiet] [--crop] [--author <author>] <photo> [ <photo> ...]"
+  echo "Usage: $(basename "$0") --event <event_title> [--quiet] [--crop] [--gravity <east|west>] [--author <author>] <photo> [ <photo> ...]"
   echo
   echo "Description:"
   echo "A simple tool to label and convert photographs for the big wall screen."
@@ -20,6 +21,7 @@ usage() {
   echo "  --event <event_title> is a short string"
   echo "  --author <author> (optional) name of the person who took the photo that also holds the copyright; if omitted, it is taken from exif data"
   echo "  --crop Crop the image to the expected ratio"
+  echo "  --gravity <west|east> Whether the annotation should be on the left (west) or right (east), west is the default"
   echo "  --open Open the output directory after conversion is done"
   echo "  --quiet Do not write verbose output"
 }
@@ -42,6 +44,7 @@ while [ $# -ge 1 ] ; do
     --help|-h) usage ; exit 0 ;;
     --author) global_author=${2:-} ; shift 2 ;;
     --event) event=${2:-} ; shift 2 ;;
+    --gravity) gravity=${2:-} ; shift 2 ;;
     --crop) crop=true ; shift ;;
     --open) open_dir=true ; shift ;;
     --quiet) quiet=true ; shift ;;
@@ -122,7 +125,8 @@ while read -r f ; do
 
   pinfo_indent "Setting exif data (author and copyright)..."
   exiftool -overwrite_original -Copyright="$author" -Author="$author" -q "${tmpfile}"
-  convert "${tmpfile}" -resize 7680x4320 -font "$font" -fill black -gravity southwest -pointsize 112 -annotate +150+150 "$event\n$author"  -append -fill white -pointsize 112 -annotate +147+153 "$event\n$author" "$o"
+  pinfo_indent "Converting and annotating..."
+  convert "${tmpfile}" -resize 7680x4320 -font "$font" -fill black -gravity "south${gravity}" -pointsize 112 -annotate +150+150 "$event\n$author"  -append -fill white -pointsize 112 -annotate +147+153 "$event\n$author" "$o"
   pinfo "Done ($o)"
   ((counter_converted++))
 done <<< "$(ls "$@")"
