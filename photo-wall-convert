@@ -79,8 +79,7 @@ fi
 [ -d "${output_dir}" ] || mkdir "${output_dir}"
 tmpfile=$(mktemp)
 
-while [ $# -gt 0 ] ; do
-  f=$1 ; shift
+while read -r f ; do
   o="converted/$f"
   pinfo "Processing $f to $o ..."
   let counter_total++
@@ -126,7 +125,7 @@ while [ $# -gt 0 ] ; do
   convert "${tmpfile}" -resize 7680x4320 -font "$font" -fill black -gravity southwest -pointsize 112 -annotate +150+150 "$event\n$author"  -append -fill white -pointsize 112 -annotate +147+153 "$event\n$author" "$o"
   pinfo "Done ($o)"
   let counter_converted++
-done
+done <<< "$(ls $@)"
 
 rm -f "${tmpfile}"
 if [ "$open_dir" == true ] ; then
