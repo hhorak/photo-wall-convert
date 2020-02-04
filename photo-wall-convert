@@ -11,7 +11,7 @@ counter_converted=0
 font='/usr/share/fonts/redhat/RedHatDisplay-Bold.ttf'
 
 usage() {
-  echo "Usage: `basename $0` --event <event_title> [--quiet] [--crop] [--author <author>] <photo> [ <photo> ...]"
+  echo "Usage: $(basename "$0") --event <event_title> [--quiet] [--crop] [--author <author>] <photo> [ <photo> ...]"
   echo
   echo "Description:"
   echo "A simple tool to label and convert photographs for the big wall screen."
@@ -25,16 +25,16 @@ usage() {
 }
 
 perror() {
-  echo "$@" >&2
+  echo "$*" >&2
 }
 
 pinfo_indent() {
-  pinfo "  $@"
+  pinfo "  $*"
 }
 
 pinfo() {
   [ "${quiet}" == true ] && return
-  echo "$@"
+  echo "$*"
 }
 
 while [ $# -ge 1 ] ; do
@@ -82,10 +82,10 @@ tmpfile=$(mktemp)
 while read -r f ; do
   o="converted/$f"
   pinfo "Processing $f to $o ..."
-  let counter_total++
+  ((counter_total++))
 
   if [ -z "$global_author" ] ; then
-    author=`exiftool $f | grep '^Creator     ' | sed -e 's/.*: //'`
+    author=$(exiftool "$f" | grep '^Creator     ' | sed -e 's/.*: //')
     if [ -z "$author" ] ; then
       perror "Error: Author not found (Creator exif field not set) in $f. Set the author by --author option. Ignoring this file."
       continue
@@ -97,20 +97,20 @@ while read -r f ; do
 
   cp "$f" "${tmpfile}"
 
-  width=`identify -format "%w" "$f"`
-  height=`identify -format "%h" "$f"`
-  let height_should_be="$width*9/16"
+  width=$(identify -format "%w" "$f")
+  height=$(identify -format "%h" "$f")
+  ((height_should_be=width*9/16))
 
   if [ "$height" -ne "$height_should_be" ] ; then
     pinfo_indent "For width $width the height should be $height_should_be, but it is $height."
     if [ "$crop" == true ] ; then
       if [ "$height" -gt "$height_should_be" ] ; then
-        let crop_px="($height-$height_should_be)/2"
+        ((crop_px=(height-height_should_be)/2))
         mogrify -crop "${width}x${height_should_be}+0+${crop_px}" "${tmpfile}"
         pinfo_indent "Croped from ${width}x${height} to ${width}x${height_should_be}+0+${crop_px}"
       else
-        let width_should_be="$height*16/9"
-        let crop_px="($width-$width_should_be)/2"
+        ((width_should_be=height*16/9))
+        ((crop_px=(width-width_should_be)/2))
         mogrify -crop "${width_should_be}x${height}+${crop_px}+0" "${tmpfile}"
         pinfo_indent "Croped from ${width}x${height} to ${width_should_be}x${height}+${crop_px}+0"
       fi
@@ -124,8 +124,8 @@ while read -r f ; do
   exiftool -overwrite_original -Copyright="$author" -Author="$author" -q "${tmpfile}"
   convert "${tmpfile}" -resize 7680x4320 -font "$font" -fill black -gravity southwest -pointsize 112 -annotate +150+150 "$event\n$author"  -append -fill white -pointsize 112 -annotate +147+153 "$event\n$author" "$o"
   pinfo "Done ($o)"
-  let counter_converted++
-done <<< "$(ls $@)"
+  ((counter_converted++))
+done <<< "$(ls "$@")"
 
 rm -f "${tmpfile}"
 if [ "$open_dir" == true ] ; then
