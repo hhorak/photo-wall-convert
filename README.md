@@ -3,7 +3,7 @@ A simple tool to label and convert photographs for the big wall screen.
 
 The tool serves primarily for adding an annotation with author and event name to the photo, and it also sets Copyright exif data.
 
-The output is stored into the converted directory.
+The output is stored into the `./converted/` directory.
 
 ```
 Usage: photo-wall-convert --event <event_title> [--quiet] [--crop] [--author <author>] <photo> [ <photo> ...]
