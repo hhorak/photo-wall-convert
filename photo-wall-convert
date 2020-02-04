@@ -1,0 +1,136 @@
+#!/bin/bash
+
+global_author=''
+event=''
+output_dir=converted
+crop=false
+open_dir=false
+quiet=false
+counter_total=0
+counter_converted=0
+font='/usr/share/fonts/redhat/RedHatDisplay-Bold.ttf'
+
+usage() {
+  echo "Usage: `basename $0` --event <event_title> [--quiet] [--crop] [--author <author>] <photo> [ <photo> ...]"
+  echo
+  echo "Description:"
+  echo "A simple tool to label and convert photographs for the big wall screen."
+  echo
+  echo "Arguments:"
+  echo "  --event <event_title> is a short string"
+  echo "  --author <author> (optional) name of the person who took the photo that also holds the copyright; if omitted, it is taken from exif data"
+  echo "  --crop Crop the image to the expected ratio"
+  echo "  --open Open the output directory after conversion is done"
+  echo "  --quiet Do not write verbose output"
+}
+
+perror() {
+  echo "$@" >&2
+}
+
+pinfo_indent() {
+  pinfo "  $@"
+}
+
+pinfo() {
+  [ "${quiet}" == true ] && return
+  echo "$@"
+}
+
+while [ $# -ge 1 ] ; do
+  case $1 in
+    --help|-h) usage ; exit 0 ;;
+    --author) global_author=${2:-} ; shift 2 ;;
+    --event) event=${2:-} ; shift 2 ;;
+    --crop) crop=true ; shift ;;
+    --open) open_dir=true ; shift ;;
+    --quiet) quiet=true ; shift ;;
+    *) break ;;
+  esac
+done
+
+if ! command -v convert >/dev/null || ! command -v identify >/dev/null ; then
+  echo "Commands 'convert' or 'identify' not found. Install them by running 'yum install ImageMagick'"
+  exit 1
+fi
+
+if ! command -v exiftool >/dev/null >/dev/null ; then
+  echo "Command 'exiftool' not found. Install it by running 'yum install perl-Image-ExifTool'"
+  exit 1
+fi
+
+if ! [ -f "$font" ] ; then
+  echo "Font $font not found. Install it by running 'yum install redhat-display-fonts'"
+  exit 1
+fi
+
+if [ -z "$event" ] ; then
+  echo "Event not set."
+  usage
+  exit 1
+fi
+
+if [ $# -eq 0 ] ; then
+  echo "No input files given."
+  usage
+  exit 1
+fi
+
+[ -d "${output_dir}" ] || mkdir "${output_dir}"
+tmpfile=$(mktemp)
+
+while [ $# -gt 0 ] ; do
+  f=$1 ; shift
+  o="converted/$f"
+  pinfo "Processing $f to $o ..."
+  let counter_total++
+
+  if [ -z "$global_author" ] ; then
+    author=`exiftool $f | grep '^Creator     ' | sed -e 's/.*: //'`
+    if [ -z "$author" ] ; then
+      perror "Error: Author not found (Creator exif field not set) in $f. Set the author by --author option. Ignoring this file."
+      continue
+    fi
+  else
+    author=$global_author
+  fi
+  pinfo_indent "Author: $author"
+
+  cp "$f" "${tmpfile}"
+
+  width=`identify -format "%w" "$f"`
+  height=`identify -format "%h" "$f"`
+  let height_should_be="$width*9/16"
+
+  if [ "$height" -ne "$height_should_be" ] ; then
+    pinfo_indent "For width $width the height should be $height_should_be, but it is $height."
+    if [ "$crop" == true ] ; then
+      if [ "$height" -gt "$height_should_be" ] ; then
+        let crop_px="($height-$height_should_be)/2"
+        mogrify -crop "${width}x${height_should_be}+0+${crop_px}" "${tmpfile}"
+        pinfo_indent "Croped from ${width}x${height} to ${width}x${height_should_be}+0+${crop_px}"
+      else
+        let width_should_be="$height*16/9"
+        let crop_px="($width-$width_should_be)/2"
+        mogrify -crop "${width_should_be}x${height}+${crop_px}+0" "${tmpfile}"
+        pinfo_indent "Croped from ${width}x${height} to ${width_should_be}x${height}+${crop_px}+0"
+      fi
+    else
+      perror "Error: Fix the ratio first or use --crop option. Ignoring this file."
+      continue
+    fi
+  fi
+
+  pinfo_indent "Setting exif data (author and copyright)..."
+  exiftool -overwrite_original -Copyright="$author" -Author="$author" -q "${tmpfile}"
+  convert "${tmpfile}" -resize 7680x4320 -font "$font" -fill black -gravity southwest -pointsize 112 -annotate +150+150 "$event\n$author"  -append -fill white -pointsize 112 -annotate +147+153 "$event\n$author" "$o"
+  pinfo "Done ($o)"
+  let counter_converted++
+done
+
+rm -f "${tmpfile}"
+if [ "$open_dir" == true ] ; then
+  xdg-open "${output_dir}"
+fi
+pinfo "Converted $counter_converted from $counter_total"
+
