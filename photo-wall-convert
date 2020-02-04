@@ -16,6 +16,8 @@ usage() {
   echo
   echo "Description:"
   echo "A simple tool to label and convert photographs for the big wall screen."
+  echo "It serves primarily for adding an annotation with author and event name to the photo, and it also sets Copyright exif data."
+  echo "The output is stored into the $output_dir directory."
   echo
   echo "Arguments:"
   echo "  --event <event_title> is a short string"
