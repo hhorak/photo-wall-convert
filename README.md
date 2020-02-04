@@ -26,3 +26,9 @@ Suppose you are in the folder with photos. Run the following command to convert 
 ```
 photo-wall-convert --event "DevConf.cz 2020" --author "Honza Horak" *.jpg *.JPG
 ```
+
+## License
+This project is licensed under GNU General Public License v3.0.
+
+## Credits
+Thanks to Ondrej Ptak who sent me the original convert command.
