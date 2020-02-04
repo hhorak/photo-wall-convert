@@ -1,0 +1,4 @@
+language: shell
+os: linux
+script:
+  - shellcheck photo-wall-convert
