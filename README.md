@@ -6,13 +6,14 @@ The tool serves primarily for adding an annotation with author and event name to
 The output is stored into the `./converted/` directory.
 
 ```
-Usage: photo-wall-convert --event <event_title> [--quiet] [--crop] [--author <author>] <photo> [ <photo> ...]
+Usage: photo-wall-convert --event <event_title> [--quiet] [--crop] [--resize] [--author <author>] <photo> [ <photo> ...]
 
 Arguments:
   --event <event_title> is a short string
   --author <author> (optional) name of the person who took the photo that also holds the copyright; if omitted, it is taken from exif data
   --crop Crop the image to the expected ratio
   --gravity <west|east> Whether the annotation should be on the left (west) or right (east), west is the default
+  --resize Resize the photo to 7680x4820. If ommited, the text size will be adjusted in the same ratio as if the photo was 7680x4820.
   --open Open the output directory after conversion is done
   --quiet Do not write verbose output
 ```
